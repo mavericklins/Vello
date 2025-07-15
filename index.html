@@ -51,14 +51,18 @@
       return
     }
 
-    // Envia a foto para o Supabase Storage
+
+    // Envia a foto para o Supabase Storage (com parâmetros extras)
     const fileName = `${Date.now()}_${fotoFile.name}`
     const { data: uploadData, error: uploadError } = await supabase.storage
       .from('clientes-fotos')
-      .upload(fileName, fotoFile)
+      .upload(fileName, fotoFile, {
+        cacheControl: '3600',
+        upsert: false
+      })
 
     if (uploadError) {
-      msg.textContent = 'Erro ao enviar foto!'
+      msg.textContent = `Erro ao enviar foto: ${uploadError.message}`
       msg.style.color = 'red'
       console.error(uploadError)
       return
