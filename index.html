@@ -19,6 +19,7 @@
     <input type="text" id="nome" placeholder="Nome" required style="width: 100%; padding: 8px; margin-bottom: 10px;" />
     <input type="email" id="email" placeholder="Email" required style="width: 100%; padding: 8px; margin-bottom: 10px;" />
     <input type="text" id="telefone" placeholder="Telefone" required style="width: 100%; padding: 8px; margin-bottom: 10px;" />
+    <input type="file" id="foto" accept="image/*" required style="width: 100%; padding: 8px; margin-bottom: 10px;" />
     <button type="submit" style="padding: 10px 20px;">Cadastrar</button>
   </form>
   <p id="mensagem" style="margin-top: 10px; color: green;"></p>
@@ -41,10 +42,35 @@
     const nome = document.getElementById('nome').value
     const email = document.getElementById('email').value
     const telefone = document.getElementById('telefone').value
+    const fotoInput = document.getElementById('foto')
+    const fotoFile = fotoInput.files[0]
 
+    if (!fotoFile) {
+      msg.textContent = 'Selecione uma foto.'
+      msg.style.color = 'red'
+      return
+    }
+
+    // Envia a foto para o Supabase Storage
+    const fileName = `${Date.now()}_${fotoFile.name}`
+    const { data: uploadData, error: uploadError } = await supabase.storage
+      .from('clientes-fotos')
+      .upload(fileName, fotoFile)
+
+    if (uploadError) {
+      msg.textContent = 'Erro ao enviar foto!'
+      msg.style.color = 'red'
+      console.error(uploadError)
+      return
+    }
+
+    // Gera a URL pública da foto
+    const fotoUrl = `${supabaseUrl}/storage/v1/object/public/clientes-fotos/${fileName}`
+
+    // Salva os dados do cliente junto com a URL da foto
     const { data, error } = await supabase
       .from('clientes')
-      .insert([{ nome, email, telefone }])
+      .insert([{ nome, email, telefone, foto: fotoUrl }])
 
     if (error) {
       msg.textContent = 'Erro ao cadastrar!'
